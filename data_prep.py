@@ -4,23 +4,23 @@ import os
 from nltk import TweetTokenizer
 import re
 
-
-
 def get_twint_data(df):
     tweet_col = df['tweet']
-    processed_tweets = []
-    for t in tweet_col:
-        tokens = tknzr.tokenize(t)
-        tokens = [remove_emoji(t) for t kn tokens]
-        tweet = ' '.join(tokens)
-        processed_tweets.append(tweet)
-    return pd.DataFrame({'tweet': processed_tweets, 
-    'score': np.ones(len(processed_tweets))})
+    processed_tweets = [process_tweet(t) for t in tweet_col]
+    return pd.DataFrame({'tweet': processed_tweets, 'score': np.ones(len(processed_tweets))})
+
 
 def get_sent140_data(df):
-    pos_tweets = df[df['score'] == 4]['tweet', 'score']
-    #TODO: Rename score field, tokenize tweets
+    pos_tweets = df[df['score'] == 4][['tweet', 'score']]
+    pos_tweets['score'] = np.zeros(len(pos_tweets.index))
+    pos_tweets['tweet'] = [process_tweet(t) for t in pos_tweets['tweet']]
+    return pos_tweets
 
+def process_tweet(t):
+    tokens = tknzr.tokenize(t)
+    tokens = [remove_emoji(t) for t in tokens]
+    tweet = ' '.join(tokens)
+    return tweet
 
 def remove_emoji(word):
     RE_EMOJI = re.compile('[\U00010000-\U0010ffff]', flags=re.UNICODE)
@@ -41,4 +41,6 @@ if __name__ == "__main__":
     s140 = pd.read_csv('trainingandtestdata/training.1600000.processed.noemoticon.csv', 
                     names = ['score', 'UID', 'timestamp', 'query', 'username', 'tweet'],
                     encoding = 'latin-1')
-    pos_df = 
+    pos_df = get_sent140_data(s140)
+    train = pd.concat([pos_df, dep_df, anx_df])
+    train.to_csv('data.csv')
